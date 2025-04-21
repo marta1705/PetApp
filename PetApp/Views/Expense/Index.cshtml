@@ -1,0 +1,165 @@
+﻿@model PetApp.Models.ExpenseListViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Wydatki";
+}
+
+<div class="container mt-4">
+    <h2>Wydatki</h2>
+
+    <form method="get" class="mb-3">
+        <label for="month" class="form-label">Wybierz miesiąc:</label>
+        <select id="month" name="month" onchange="this.form.submit()" class="form-select w-auto d-inline">
+            @foreach (var month in Model.AvailableMonths)
+            {
+                <option value="@month.ToString("yyyy-MM")" selected="@(month == Model.SelectedMonth)">
+                    @month.ToString("MMMM yyyy", CultureInfo.CurrentCulture)
+                </option>
+            }
+        </select>
+    </form>
+
+    @if (Model.Expenses.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <strong>Łączne wydatki:</strong>
+                    <div>@Model.TotalAmount.ToString("N2") zł</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <strong>Średni dzienny wydatek:</strong>
+                    <div>@Model.AverageDailyAmount.ToString("N2") zł</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <strong>Najwięcej wydano na:</strong>
+                    <div>@Model.MostFrequentCategory</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <strong>Zmiana od poprzedniego miesiąca:</strong>
+                    <div class="@(Model.ChangeFromPreviousMonth >= 0 ? "text-success" : "text-danger")">
+                        @(Model.ChangeFromPreviousMonth >= 0 ? "+" : "")@Model.ChangeFromPreviousMonth.ToString("N0")%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-4 mb-4 flex-wrap">
+            <div class="chart-card p-4 col-md-3" style="max-width: 300px;">
+                <h5>Wydatki według kategorii</h5>
+                <canvas id="categoryChart" height="150"></canvas>
+            </div>
+
+            <div class="chart-card p-4 col-md-9" style="min-width: 250px;">
+                <h5>Wydatki w czasie</h5>
+                <canvas id="timeChart" height="100"></canvas>
+            </div>
+        </div>
+
+
+
+        <a class="btn btn-primary mt-3" style="background-color: #28a745; border: none; margin-bottom: 5px" asp-controller="Expense" asp-action="Add">Dodaj nowy wydatek</a>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Kategoria</th>
+                    <th>Kwota</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var expense in Model.Expenses)
+                {
+                    <tr>
+                        <td>@expense.Category</td>
+                        <td>@expense.Amount.ToString("N2") zł</td>
+                        <td>@expense.Date.ToString("dd.MM.yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    }
+    else
+    {
+        <p>Brak wydatków dla wybranego miesiąca.</p>
+    }
+
+    
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+
+        const categoryLabels = @Html.Raw(Json.Serialize(Model.ExpensesByCategory.Keys));
+        const categoryData = @Html.Raw(Json.Serialize(Model.ExpensesByCategory.Values));
+
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    label: 'Wydatki',
+                    data: categoryData,
+                    backgroundColor: [
+                        '#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f',
+                        '#edc949', '#af7aa1', '#ff9da7', '#9c755f', '#bab0ab'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        const ctxTime = document.getElementById('timeChart').getContext('2d');
+
+        const timeLabels = @Html.Raw(Json.Serialize(Model.ExpensesByDate.Keys));
+        const timeData = @Html.Raw(Json.Serialize(Model.ExpensesByDate.Values));
+        
+        new Chart(ctxTime, {
+            type: 'bar',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Wydatki dzienne',
+                    data: timeData,
+                    backgroundColor: '#28a745',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 10
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,41 @@
+﻿@model PetApp.Models.Expense
+@{
+    ViewData["Title"] = "Dodaj wydatek";
+}
+
+<div class="card form-card">
+    <div class="card-body">
+
+<h2>Dodaj nowy wydatek</h2>
+
+<form asp-action="Add" method="post" class="mt-3">
+    <input type="hidden" asp-for="UserId" />
+    <div class="mb-3">
+        <label asp-for="Category" class="form-label">Kategoria</label>
+        <input asp-for="Category" class="form-control" />
+        <span asp-validation-for="Category" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Amount" class="form-label">Kwota</label>
+        <input asp-for="Amount" class="form-control" />
+        <span asp-validation-for="Amount" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Date" class="form-label">Data</label>
+        <input asp-for="Date" type="date" class="form-control" />
+        <span asp-validation-for="Date" class="text-danger"></span>
+    </div>
+            <div class="modal-buttons">
+
+    <button type="submit" class="btn btn-success">Zapisz</button>
+    <a asp-action="Index" class="btn btn-secondary">Anuluj</a>
+    </div>
+</form>
+
+</div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

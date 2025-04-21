@@ -1,0 +1,43 @@
+﻿@model Pet
+
+<div class="card form-card">
+    <div class="card-body">
+        <h2>@(Model.Id == 0 ? "Dodaj" : "Edytuj") zwierzaka</h2>
+
+        <form asp-action="Index" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="form-group">
+                <label for="name">Imię zwierzaka:</label>
+                <input asp-for="Name" type="text" class="form-control" placeholder="Wpisz imię zwierzaka" required />
+            </div>
+
+            <div class="form-group">
+                <label for="species">Gatunek:</label>
+                <input asp-for="Species" type="text" class="form-control" placeholder="Wpisz gatunek" required />
+            </div>
+
+            <div class="form-group">
+                <label for="breed">Rasa:</label>
+                <input asp-for="Breed" type="text" class="form-control" placeholder="Wpisz rasę" />
+            </div>
+
+            <div class="form-group">
+                <label for="birthDate">Data urodzenia:</label>
+                <input asp-for="BirthDate" type="date" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label for="weight">Waga (kg):</label>
+                <input asp-for="Weight" type="number" class="form-control" step="0.1" placeholder="Wpisz wagę" />
+            </div>
+
+            <div class="form-group">
+                <label for="photo">Link do zdjęcia:</label>
+                <input asp-for="Photo" type="file" class="form-control"/>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Zapisz</button>
+        </form>
+    </div>
+</div>

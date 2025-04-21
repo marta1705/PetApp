@@ -1,0 +1,62 @@
+﻿<div class="main-container">
+	<div class="pets-section">
+		<h1>Moje zwierzaki</h1>
+		<a asp-controller="Home" asp-action="Edit" asp-route-id="0" class="btn btn-success btn-add-pet">Dodaj zwierzaka</a>
+		<div class="cards">
+			@foreach (var pet in ViewBag.Pets)
+			{
+				<div class="card">
+					<img src="@pet.PhotoUrl" alt="Zdjęcie zwierzaka" class="pet-image" />
+					<div class="card-body">
+						<h2>@pet.Name</h2>
+						<p><strong>Gatunek:</strong> @pet.Species</p>
+						<p><strong>Rasa:</strong> @(pet.Breed ?? "Nieznana")</p>
+						<p><strong>Data urodzenia:</strong> @(pet.BirthDate?.ToString("yyyy-MM-dd") ?? "Brak danych")</p>
+						<p><strong>Waga:</strong> @(pet.Weight != null ? pet.Weight + " kg" : "Brak danych")</p>
+
+						<div class="card-buttons">
+							<a asp-controller="Home" asp-action="Edit" asp-route-id="@pet.Id" class="btn btn-primary">Edytuj</a>
+							<button class="btn btn-danger" onclick="confirmDelete(@pet.Id)">Usuń</button>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+	<div class="reminders">
+		<h1>Przypomnienia</h1>
+	</div>
+</div>
+
+
+<div id="deleteModal" class="modal" style="display:none;">
+	<div class="modal-content">
+		<p>Czy na pewno chcesz usunąć dane zwierzaka?</p>
+		<div class="modal-buttons">
+			<button id="confirmDeleteBtn" class="btn btn-danger">Tak</button>
+			<button onclick="closeModal()" class="btn btn-secondary">Anuluj</button>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script>
+		let deletePetId = null;
+
+		function confirmDelete(petId) {
+			deletePetId = petId;
+			document.getElementById("deleteModal").style.display = "flex";
+		}
+
+		function closeModal() {
+			document.getElementById("deleteModal").style.display = "none";
+			deletePetId = null;
+		}
+
+		document.getElementById("confirmDeleteBtn").addEventListener("click", function() {
+			if (deletePetId) {
+				window.location.href = `/Home/Delete/${deletePetId}`;
+			}
+		});
+	</script>
+}

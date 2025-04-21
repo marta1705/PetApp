@@ -1,0 +1,62 @@
+﻿@{
+    var petsWithHealthRecords = ViewBag.PetsWithHealthRecords as List<Pet>;
+}
+
+<div class="mb-3">
+    <a class="btn btn-success" asp-action="AddHealthRecord" asp-route-id="0">Dodaj</a>
+</div>
+
+@if (petsWithHealthRecords != null)
+{
+    @foreach (var pet in petsWithHealthRecords)
+    {
+        <div class="pet-health-card">
+            <h2>@pet.Name - Historia zdrowia</h2>
+
+            @if (pet.HealthRecords.Any())
+            {
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Typ</th>
+                            <th>Data rozpoczęcia</th>
+                            <th>Data zakończenia</th>
+                            <th>Opis</th>
+                            <th>Cena</th>
+                            <th>Edytuj</th>
+                            <th>Usuń</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in pet.HealthRecords)
+                        {
+                            <tr>
+                                <td>@record.Type</td>
+                                <td>@record.StartDate.ToString("yyyy-MM-dd")</td>
+                                <td>@(record.EndDate?.ToString("yyyy-MM-dd") ?? "Brak danych")</td>
+                                <td>@record.Description</td>
+                                <td>@record.Price?.ToString("N2") zł</td>
+                                <td>
+                                    <a class="btn btn-success" asp-action="AddHealthRecord" asp-route-id="@record.Id">Edytuj</a>
+                                </td>
+                                <td>
+                                    <form asp-action="DeleteHealthRecord" method="post" asp-route-id="@record.Id" style="display:inline;" onsubmit="return confirm('Czy na pewno chcesz usunąć ten rekord?);">
+                                        <button type="submit" class="btn btn-danger" style="background-color: darkred; width: auto">Usuń</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>Brak historii zdrowia dla tego zwierzaka.</p>
+            }
+        </div>
+    }
+}
+else
+{
+    <p>Brak danych o zwierzakach.</p>
+}

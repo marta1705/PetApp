@@ -1,0 +1,59 @@
+﻿@model PetApp.Models.HealthRecord
+
+@{
+    ViewBag.Title = "Dodaj Rekord Zdrowia";
+    var pets = ViewBag.Pets as List<Pet>;
+}
+
+<div class="card form-card">
+    <div class="card-body">
+<h2>Dodaj Rekord Zdrowia</h2>
+
+<form asp-controller="Home" asp-action="AddHealthRecord" method="post">
+    <div class="form-group">
+        <label for="PetId">Wybierz zwierzaka:</label>
+        <select asp-for="PetId" class="form-control" required>
+            <option value="">-- Wybierz zwierzaka --</option>
+            @foreach (var pet in pets)
+            {
+                <option value="@pet.Id">@pet.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Typ:</label>
+        <input asp-for="Type" type="text" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+        <label>Data rozpoczęcia:</label>
+        <input asp-for="StartDate" type="date" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+        <label>Data zakończenia:</label>
+        <input asp-for="EndDate" type="date" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Opis:</label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label>Cena:</label>
+        <input asp-for="Price" type="number" class="form-control" step="0.01" />
+    </div>
+
+    <div class="form-check mt-3">
+        <input asp-for="AddToExpenses" class="form-check-input" type="checkbox" id="addToExpenses" />
+        <label class="form-check-label" for="addToExpenses">
+            Dodaj ten koszt do wydatków
+        </label>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Zapisz</button>
+</form>
+</div>
+</div>
