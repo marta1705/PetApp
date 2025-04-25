@@ -17,6 +17,6 @@ namespace PetApp.Models
 
         [ForeignKey("Pet")]
         public int PetId { get; set; }
-        public Pet Pet { get; set; }
+        public Pet? Pet { get; set; }
     }
 }

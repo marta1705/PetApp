@@ -232,13 +232,31 @@ button[type="submit"] {
     border-radius: 8px;
 }
 
-
-
-/*LOGIN AND REGISTER*/
-.btn-success {
-    background-color: #28a745; 
-    border-color: #28a745;
+.table th a {
+    text-decoration: none;
+    color: inherit;
+    align-items: center;
+    font-size: 20px;
 }
+
+.table th a:hover {
+        color: darkslategrey;
+    }
+
+.table-th-container {
+    display: flex;
+}
+
+.table-th-container-arrows {
+    display: flex;
+    margin-left: auto;
+}
+
+    /*LOGIN AND REGISTER*/
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
 
     .btn-success:hover {
         background-color: #218838; 

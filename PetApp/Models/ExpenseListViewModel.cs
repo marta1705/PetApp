@@ -10,6 +10,9 @@
         public string? MostFrequentCategory { get; set; }
         public float ChangeFromPreviousMonth { get; set; }
         public Dictionary<string, float> ExpensesByCategory { get; set; } = new();
-        public Dictionary<string, float> ExpensesByDate { get; set; } = new(); 
+        public Dictionary<string, float> ExpensesByDate { get; set; } = new();
+
+        public string SortBy { get; set; }
+        public string SortDirection { get; set; }
     }
 }

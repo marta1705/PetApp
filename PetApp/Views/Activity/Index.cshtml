@@ -1,0 +1,374 @@
+﻿@model PetApp.Models.ActivityListViewModel
+@using System.Globalization
+
+@{
+	ViewData["Title"] = "Aktywności";
+}
+
+<div class="container mt-4">
+	<h2>Aktywności</h2>
+
+	<div class="activity-header mb-3">
+		<div>
+			<form method="get" class="filer-form">
+				<input type="hidden" name="sortBy" value="@Model.SortBy" />
+				<input type="hidden" name="sortDirection" value="@Model.SortDirection" />
+				<label for="month" class="form-label">Wybierz miesiąc:</label>
+				<select id="month" name="month" onchange="this.form.submit()" class="form-select w-auto d-inline">
+					@foreach (var month in Model.AvailableMonths)
+					{
+						<option value="@month.ToString("yyyy-MM")" selected="@(month == Model.SelectedMonth)">
+							@month.ToString("MMMM yyyy", CultureInfo.CurrentCulture)
+						</option>
+					}
+				</select>
+			</form>
+		</div>
+		<a class="btn btn-primary" style="background-color: #28a745; border: none;" asp-controller="Activity" asp-action="Add" asp-route-id="0">Dodaj nową aktywność</a>
+	</div>
+
+	<button class="btn btn-secondary mb-3" type="button" onclick="toggleAnalysisFilter()">Filtruj</button>
+	<div id="analysisFilter" class="card p-3 mb-4" style="display: none; z-index: 10">
+
+		<h5>Wybierz analizy do wyświetlenia:</h5>
+
+		<div class="mt-3">
+			<button class="btn btn-sm btn-outline-primary" type="button" onclick="selectAllCharts()">Zaznacz wszystko</button>
+			<button class="btn btn-sm btn-outline-secondary" type="button" onclick="clearAllCharts()">Wyczyść</button>
+		</div>
+		<div class="form-check">
+			<input class="form-check-input analysis-checkbox" type="checkbox" value="activityByCategoryChart" checked="checked" id="chkCategory" />
+			<label class="form-check-label" for="chkCategory">Aktywności wg kategorii</label>
+		</div>
+		<div class="form-check">
+			<input checked="checked" class="form-check-input analysis-checkbox" type="checkbox" value="activityDistanceChart" id="chkTimeDistance">
+			<label class="form-check-label" for="chkTimeDistance">Aktywność w czasie</label>
+		</div>
+		<div class="form-check">
+			<input checked="checked" class="form-check-input analysis-checkbox" type="checkbox" value="monthlyChart" id="chkMonthly">
+			<label class="form-check-label" for="chkMonthly">Łączna aktywność miesięczna</label>
+		</div>
+		@if (ViewBag.HasMultiplePets)
+		{
+			<div class="form-check">
+				<input checked="checked" class="form-check-input analysis-checkbox" type="checkbox" value="petActivityChart" id="chkPet">
+				<label class="form-check-label" for="chkPet">Aktywność według zwierzaka</label>
+			</div>
+		}
+
+		<div class="mt-3">
+			<button class="btn btn-success" type="button" onclick="toggleAnalysisFilter()">Anuluj</button>
+			<button class="btn btn-primary" type="button" onclick="applyChartFilters()">Zatwierdź</button>
+		</div>
+	</div>
+
+	@if (Model.Activities.Any())
+	{
+		<div class="row activity-summary">
+			<div class="col-12 col-md-3 mb-3">
+				<div class="summary-card">
+					<strong>Łączny czas:</strong>
+					<div>@Model.TotalDuration</div>
+				</div>
+			</div>
+			<div class="col-12 col-md-3 mb-3">
+				<div class="summary-card">
+					<strong>Łączny dystans:</strong>
+					<div>@Model.TotalDistance.ToString("N2") km</div>
+				</div>
+			</div>
+			<div class="col-12 col-md-3 mb-3">
+				<div class="summary-card">
+					<strong>Średnia aktywność dzienna:</strong>
+					<div>@Model.AverageDailyDuration</div>
+				</div>
+			</div>
+			<div class="col-12 col-md-3 mb-3">
+				<div class="summary-card">
+					<strong>Zmiana od poprzedniego miesiąca:</strong>
+					<div class="@(Model.ChangeFromPreviousMonth >= 0 ? "text-success" : "text-danger")">
+						@(Model.ChangeFromPreviousMonth >= 0 ? "+" : "")@Model.ChangeFromPreviousMonth.ToString("N0")%
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+		<div class="row activity-summary">
+			<div class="col-md-3 mb-4">
+				<div class="summary-card p-4 h-100">
+					<h5>Aktywności według kategorii</h5>
+					<canvas id="activityByCategoryChart" height="100"></canvas>
+				</div>
+			</div>
+			<div class="col-md-9 mb-4">
+				<div class="summary-card p-4 h-100">
+					<h5>Aktywność w czasie</h5>
+					<canvas id="activityDistanceChart" height="100"></canvas>
+				</div>
+			</div>
+		</div>
+
+		<div class="row activity-summary">
+			<div class="col-md-9 mb-4">
+				<div class="summary-card p-4 h-100">
+
+			<h5>Łączna aktywność miesięczna</h5>
+			<canvas id="monthlyChart" height="100"></canvas>
+				</div>
+		</div>
+		@if (ViewBag.HasMultiplePets)
+		{	
+				<div class="col-md-3 mb-4">
+					<div class ="summary-card p-4 h-100">
+
+			<h5>Aktywność według zwierzaka</h5>
+			<canvas id="petActivityChart" height="350"></canvas>
+					</div>
+		</div>
+		}
+		</div>
+
+		<table class="table table-bordered activity-table">
+			<thead>
+				<tr>
+					<th>Zwierzak</th>
+					<th>Kategoria</th>
+					<th>
+						<div class="table-th-container">
+							Czas (h)
+							<div class="table-th-container-arrows">
+								<a asp-action="Index" asp-route-sortBy="time" asp-route-sortDirection="asc">↑</a>
+								<a asp-action="Index" asp-route-sortBy="time" asp-route-sortDirection="desc">↓</a>
+							</div>
+						</div>
+					</th>
+					<th>
+						<div class="table-th-container">
+							Dystans (km)
+							<div class="table-th-container-arrows">
+								<a asp-action="Index" asp-route-sortBy="distance" asp-route-sortDirection="asc">↑</a>
+								<a asp-action="Index" asp-route-sortBy="distance" asp-route-sortDirection="desc">↓</a>
+							</div>
+						</div>
+					</th>
+					<th>
+						<div class="table-th-container">
+							Data
+							<div class="table-th-container-arrows">
+								<a asp-action="Index" asp-route-sortBy="date" asp-route-sortDirection="asc">↑</a>
+								<a asp-action="Index" asp-route-sortBy="date" asp-route-sortDirection="desc">↓</a>
+							</div>
+						</div>
+					</th>
+					<th>Edytuj</th>
+					<th>Usuń</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var activity in Model.Activities)
+				{
+					<tr>
+						<td>@activity.Pet?.Name</td>
+						<td>@activity.Category</td>
+						<td>
+							@{
+								int hours = (int)activity.Duration;
+								int minutes = (int)((activity.Duration - hours) * 60);
+								var formattedDuration = $"{hours}h {minutes}min";
+							}
+							@formattedDuration
+						</td>
+						<td>@activity.Distance.ToString("N2")</td>
+						<td>@activity.Date.ToString("dd.MM.yyyy")</td>
+						<td>
+							<a class="btn btn-edit" asp-action="Add" asp-route-id="@activity.Id">Edytuj</a>
+						</td>
+						<td>
+							<form asp-action="Delete" method="post" asp-route-id="@activity.Id" onsubmit="return confirm('Czy na pewno chcesz usunąć tę aktywność?');">
+								<button type="submit" class="btn btn-delete">Usuń</button>
+							</form>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+	else
+	{
+		<p>Brak aktywności dla wybranego miesiąca.</p>
+	}
+</div>
+
+@section Styles {
+	<link href="~/css/activity.css" rel="stylesheet" />
+}
+
+
+@section Scripts {
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script>
+		// wykres do aktywności wg kategorii
+		const categoryCtx = document.getElementById('activityByCategoryChart').getContext('2d');
+
+		const activityCategoryLabels = @Html.Raw(Json.Serialize(Model.DurationByCategory.Keys));
+		const activityCategoryData = @Html.Raw(Json.Serialize(Model.DurationByCategory.Values));
+
+		new Chart(categoryCtx, {
+			type: 'pie',
+			data: {
+				labels: activityCategoryLabels,
+				datasets: [{
+					label: 'Czas (h)',
+					data: activityCategoryData,
+					backgroundColor: [
+						'#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f',
+						'#edc949', '#af7aa1', '#ff9da7', '#9c755f', '#bab0ab'
+					],
+					borderWidth: 1
+				}]
+			},
+			options: {
+				responsive: true,
+				plugins: {
+					legend: {
+						position: 'bottom'
+					}
+				}
+			}
+		});
+
+		// aktywności w czasie czas i dystans
+
+		const activityTimeCtx = document.getElementById('activityDistanceChart').getContext('2d');
+
+		const activityDateLabels = @Html.Raw(Json.Serialize(Model.DurationByDate.Keys));
+		const activityDurationData = @Html.Raw(Json.Serialize(Model.DurationByDate.Values));
+		const activityDistanceData = @Html.Raw(Json.Serialize(Model.DistanceByDate.Values));
+
+		new Chart(activityTimeCtx, {
+			type: 'line',
+			data: {
+				labels: activityDateLabels,
+				datasets: [{
+					label: 'Czas (h)',
+					data: activityDurationData,
+					fill: false,
+					borderColor: 'rgba(75, 192, 192, 1)',
+					tension: 0.2
+				},
+				{
+				label: 'Dystans (km)',
+				data: activityDistanceData,
+				fill: false,
+				borderColor: 'rgba(255, 99, 132, 1)',
+				tension: 0.2
+			}
+				]
+			},
+			options: {
+				responsive: true,
+				scales: {
+					x: { title: { display: true, text: 'Data' } },
+					y: { title: { display: true, text: 'Czas (h)/ Dystans (km)' } }
+				}
+			}
+		});
+
+		// aktywność wg miesięcy
+
+		const monthLabels = @Html.Raw(Json.Serialize(Model.MonthlyActivity.Keys));
+		const monthValues = @Html.Raw(Json.Serialize(Model.MonthlyActivity.Values));
+
+		new Chart(document.getElementById('monthlyChart'), {
+			type: 'line',
+			data: {
+				labels: monthLabels,
+				datasets: [{
+					label: 'Czas aktywności (h)',
+					data: monthValues,
+					borderColor: '#4e79a7',
+					fill: false,
+					tension: 0.2
+				}]
+			},
+			options: {
+				responsive: true,
+				scales: {
+					y: { title: { display: true, text: 'Czas (h)' } },
+					x: { title: { display: true, text: 'Miesiąc' } }
+				}
+			}
+		});
+
+		// czas aktywności wg zwierząt
+
+		const petLabels = @Html.Raw(Json.Serialize(Model.ActivityByPet.Keys));
+		const petData = @Html.Raw(Json.Serialize(Model.ActivityByPet.Values));
+
+
+		new Chart(document.getElementById('petActivityChart'), {
+			type: 'bar',
+			data: {
+				labels: petLabels,
+				datasets: [{
+					label: 'Czas (h)',
+					data: petData,
+					backgroundColor: '#59a14f'
+
+				}]
+			},
+			options: {
+				indexAxis: 'y',
+				elements: {
+					bar: {
+						borderWidth: 2,
+					}
+				},
+				responsive: true,
+				plugins: {
+					legend: {
+						position: 'bottom',
+					},
+					title: {
+						display: true,
+
+					}
+				},
+				scales: {
+					x: { title: { display: true, text: 'Czas (h)' } },
+					y: { title: { display: true, text: 'Zwierzak' } }
+				}
+			}
+		});
+
+
+		function toggleAnalysisFilter() {
+			const filter = document.getElementById('analysisFilter');
+			filter.style.display = (filter.style.display === 'none') ? 'block' : 'none';
+		}
+
+		function selectAllCharts() {
+			document.querySelectorAll('.analysis-checkbox').forEach(cb => cb.checked = true);
+		}
+
+		function clearAllCharts() {
+			document.querySelectorAll('.analysis-checkbox').forEach(cb => cb.checked = false);
+		}
+
+		function applyChartFilters() {
+			const charts = ['activityByCategoryChart', 'activityDistanceChart', 'monthlyChart', 'petActivityChart'];
+			charts.forEach(chartId => {
+				const checkbox = document.querySelector(`.analysis-checkbox[value="${chartId}"]`);
+				const chartCanvas = document.getElementById(chartId)?.closest('.col-md-3, .col-md-9');
+				if (chartCanvas) {
+					chartCanvas.style.display = checkbox && checkbox.checked ? 'block' : 'none';
+				}
+			});
+			toggleAnalysisFilter();
+		}
+
+
+	</script>
+}
+

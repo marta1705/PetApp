@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using PetApp.DAL;
 using PetApp.Models;
 
@@ -17,7 +18,7 @@ namespace PetApp.Controllers
             this.db = db;
         }
 
-        public IActionResult Index(string? month)
+        public IActionResult Index(string? month, string sortBy = "date", string sortDirection = "desc")
         {
             if (!User.Identity.IsAuthenticated)
                 return RedirectToAction("Login", "Account");
@@ -36,14 +37,38 @@ namespace PetApp.Controllers
             }
             else
             {
-                selectedMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                var latestExpense = allExpenses.OrderByDescending(e => e.Date).FirstOrDefault();
+
+                if (latestExpense != null)
+                {
+                    selectedMonth = new DateTime(latestExpense.Date.Year, latestExpense.Date.Month, 1);
+                }
+                else
+                {
+                    selectedMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+                }
             }
 
-            var filteredExpenses = allExpenses
-                .Where(e => e.Date.Year == selectedMonth.Year && e.Date.Month == selectedMonth.Month)
-                .OrderByDescending(e => e.Date)
-                .ToList();
+            sortBy = sortBy.ToLower() == "amount" ? "amount" : "date";
+            sortDirection = sortDirection.ToLower() == "asc" ? "asc" : "desc";
 
+            var filteredExpenses = allExpenses
+                .Where(e => e.Date.Year == selectedMonth.Year && e.Date.Month == selectedMonth.Month).ToList();
+
+            // Sortowanie
+            if (sortBy == "amount")
+            {
+                filteredExpenses = sortDirection == "asc"
+                    ? filteredExpenses.OrderBy(e => e.Amount).ToList()
+                    : filteredExpenses.OrderByDescending(e => e.Amount).ToList();
+            }
+            else
+            {
+                filteredExpenses = sortDirection == "asc"
+                    ? filteredExpenses.OrderBy(e => e.Date).ToList()
+                    : filteredExpenses.OrderByDescending(e => e.Date).ToList();
+            }
 
             var availableMonths = allExpenses
                 .Select(e => new DateTime(e.Date.Year, e.Date.Month, 1))
@@ -89,12 +114,23 @@ namespace PetApp.Controllers
             return View(viewModel);
         }
 
-        public IActionResult Add()
+        public IActionResult Add(int id)
         {
-            var expense = new Expense();
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            expense.UserId = userId;
-            expense.Date = DateTime.Today;
+            Expense expense;
+            if (id == 0)
+            {
+                expense = new Expense();
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                expense.UserId = userId;
+                expense.Date = DateTime.Today;
+            } else
+            {
+                expense = db.Expenses.Find(id);
+                if (expense == null)
+                {
+                    return NotFound();
+                }
+            }
 
             return View(expense);
         }
@@ -102,19 +138,34 @@ namespace PetApp.Controllers
         [HttpPost]
         public IActionResult Add(Expense expense)
         {
-            if (!User.Identity.IsAuthenticated)
-            {
-                return RedirectToAction("Login", "Account");
-            }
 
             if (ModelState.IsValid)
             {
-                db.Expenses.Add(expense);
-                db.SaveChanges();
+                    if (expense.Id == 0)
+                    {
+                        db.Expenses.Add(expense);
+                    } else
+                    {
+                        db.Expenses.Update(expense);
+                    }
+
+                     db.SaveChanges();
                 return RedirectToAction("Index");
             }
 
             return View(expense);
+        }
+
+        [HttpPost]
+        public IActionResult Delete(int id)
+        {
+            var expenseRecord = db.Expenses.Find(id);
+            if (expenseRecord != null)
+            {
+                db.Expenses.Remove(expenseRecord);
+                db.SaveChanges();
+            }
+            return RedirectToAction("Index");
         }
 
     }
