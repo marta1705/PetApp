@@ -77,7 +77,9 @@ namespace PetApp.Controllers
                 .ToList();
 
             float totalAmount = filteredExpenses.Sum(e => e.Amount);
-            float averageAmount = filteredExpenses.Count > 0 ? filteredExpenses.Average(e => e.Amount) : 0;
+            float averageAmount = filteredExpenses.Count > 0 ? filteredExpenses.Sum(e => e.Amount) : 0;
+            int days = DateTime.Today.Day;
+            float dailyAverageAmount = averageAmount / days;
             string? mostFrequentCategory = filteredExpenses
     .GroupBy(e => e.Category)
     .OrderByDescending(g => g.Sum(e => e.Amount))
@@ -97,7 +99,7 @@ namespace PetApp.Controllers
                 SelectedMonth = selectedMonth,
                 AvailableMonths = availableMonths,
                 TotalAmount = totalAmount,
-                AverageDailyAmount = averageAmount,
+                AverageDailyAmount = dailyAverageAmount,
                 MostFrequentCategory = mostFrequentCategory,
                 ChangeFromPreviousMonth = changefromPreviousMonth
             };

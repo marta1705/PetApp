@@ -203,7 +203,10 @@ namespace PetApp.Controllers
                 .ToDictionary(g => g.Key.ToString("dd MMMM", CultureInfo.CurrentCulture), g => g.Sum(a => a.Distance))
             };
 
+            var currentYear = DateTime.Today.Year;
+
             var monthlyActivity = allActivities
+                .Where(a => a.Date.Year == currentYear)
                 .GroupBy(a => new DateTime(a.Date.Year, a.Date.Month, 1))
                 .OrderBy(g => g.Key)
                 .ToDictionary(g => g.Key.ToString("yyyy-MM"), g => g.Sum(a => a.Duration));

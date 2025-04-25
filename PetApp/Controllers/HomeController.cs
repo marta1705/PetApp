@@ -28,8 +28,11 @@ public class HomeController : Controller
 
         if (User.Identity.IsAuthenticated) {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
-            var pets = db.Pets.Where(p => p.UserId == userId).ToList(); 
+            var pets = db.Pets.Where(p => p.UserId == userId).ToList();
+            var reminders = db.Reminders.Where(r => r.UserId == userId).OrderBy(r => r.IsCompleted).ThenBy(r => r.DueDate).ToList();
             ViewBag.Pets = pets;
+            ViewBag.Reminders = reminders;
+
         }
 
         return View();
@@ -89,34 +92,6 @@ public class HomeController : Controller
         return View(pet);
     }
 
-    public IActionResult Health()
-    {
-        if (User.Identity.IsAuthenticated)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
-
-            var petsWithHealthRecords = db.Pets
-                .Where(p => p.UserId == userId) 
-                .Include(p => p.HealthRecords) 
-                .ToList();
-
-            foreach (var pet in petsWithHealthRecords)
-            {
-                pet.HealthRecords = pet.HealthRecords
-                    .OrderByDescending(hr => hr.StartDate)
-                    .ToList();
-            }
-
-            ViewBag.PetsWithHealthRecords = petsWithHealthRecords;
-        }
-        else
-        {
-            return RedirectToAction("Login", "Account");
-        }
-
-        return View();
-    }
-
     public IActionResult Delete(int id)
     {
         var pet = db.Pets.Find(id);
@@ -129,74 +104,26 @@ public class HomeController : Controller
         return RedirectToAction("Index");
     }
 
-    public IActionResult AddHealthRecord(int id)
-    {
-        if (!User.Identity.IsAuthenticated)
-        {
-            return RedirectToAction("Login", "Account");
-        }
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var pets = db.Pets.Where(p => p.UserId == userId).ToList();
-        ViewBag.Pets = pets;
-
-        HealthRecord healthRecord;
-
-        if (id == 0)
-        {
-            healthRecord = new HealthRecord();
-        }
-        else
-        {
-            healthRecord = db.HealthRecords.Find(id);
-            if (healthRecord == null)
-            {
-                return NotFound();
-            }
-        }
-        return View(healthRecord);
-    }
     [HttpPost]
-    public IActionResult AddHealthRecord(HealthRecord healthRecord)
+    public IActionResult AddReminder(Reminder reminder)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        reminder.UserId = userId;
+        reminder.IsCompleted = false;
+        reminder.IsSent = true;
+
 
         if (ModelState.IsValid)
         {
-            if (healthRecord.Price == null)
-            {
-                healthRecord.Price = 0;
-            }
-
-            if (healthRecord.Id == 0)
-            {
-                db.HealthRecords.Add(healthRecord);
-            } else
-            {
-                db.HealthRecords.Update(healthRecord);
-            }
+            Console.WriteLine("Model jest poprawny");
+            db.Reminders.Add(reminder);
             db.SaveChanges();
-
-
-            if (healthRecord.AddToExpenses && healthRecord.Price != null)
-            {
-                var expense = new Expense
-                {
-                    Amount = (float)healthRecord.Price,
-                    Category = "Weterynarz",
-                    Date = healthRecord.StartDate,
-                    UserId = userId,
-                    HealthRecordId = healthRecord.Id
-                };
-                db.Expenses.Add(expense);
-                db.SaveChanges();
-            }
-            return RedirectToAction("Health");
+            return RedirectToAction("Index");
         }
         else
         {
-            Console.WriteLine("ModelState jest niepoprawny!");
-
+            Console.WriteLine("Model NIE jest poprawny");
             foreach (var modelState in ModelState.Values)
             {
                 foreach (var error in modelState.Errors)
@@ -204,25 +131,37 @@ public class HomeController : Controller
                     Console.WriteLine(error.ErrorMessage);
                 }
             }
+            return RedirectToAction("Index"); 
         }
-
-        var pets = db.Pets.Where(p => p.UserId == userId).ToList();
-        ViewBag.Pets = pets;
-
-        return View(healthRecord);
     }
 
     [HttpPost]
-    public IActionResult DeleteHealthRecord(int id)
+    public IActionResult ToggleReminder(int id)
     {
-        var healthRecord = db.HealthRecords.Find(id);
-        if (healthRecord != null)
+        var reminder = db.Reminders.Find(id);
+
+        if (reminder != null)
         {
-            db.HealthRecords.Remove(healthRecord);
+            reminder.IsCompleted = !reminder.IsCompleted;
             db.SaveChanges();
         }
-        return RedirectToAction("Health");
+
+        return RedirectToAction("Index");
     }
+
+    [HttpPost]
+    public IActionResult DeleteReminder(int id)
+    {
+        var reminder = db.Reminders.Find(id);
+        if (reminder != null)
+        {
+            db.Reminders.Remove(reminder);
+            db.SaveChanges();
+        }
+
+        return RedirectToAction("Index");
+    }
+
 
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

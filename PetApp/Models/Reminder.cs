@@ -13,10 +13,10 @@ namespace PetApp.Models
 
         public DateTime DueDate { get; set; }
         public bool IsCompleted { get; set; }
-
+        public bool IsSent { get; set; }
 
         [ForeignKey("User")]
-        public string UserId { get; set; }
-        public PetAppUser User { get; set; }
+        public string? UserId { get; set; }
+        public PetAppUser? User { get; set; }
     }
 }

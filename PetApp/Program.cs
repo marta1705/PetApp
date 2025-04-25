@@ -3,8 +3,11 @@ using PetApp.DAL;
 using Microsoft.AspNetCore.Identity;
 using PetApp.Models;
 using PetApp.Areas.Identity.Data;
+using PetApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHostedService<ReminderService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -15,6 +18,7 @@ builder.Services.AddIdentity<PetAppUser, IdentityRole>()
         .AddDefaultTokenProviders();
 
 builder.Services.AddRazorPages();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

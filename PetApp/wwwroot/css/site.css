@@ -137,6 +137,15 @@ body {
         border: none;
     }
 
+.btn-link {
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+
 .form-group {
     margin-bottom: 15px;
 }

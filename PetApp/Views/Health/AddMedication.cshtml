@@ -1,0 +1,52 @@
+﻿@model PetApp.Models.Medication
+
+@{
+	ViewData["Title"] = "Dodaj Lek";
+	var pets = ViewBag.Pets as List<Pet>;
+}
+
+<h2>@(Model.Id == 0 ? "Dodaj nowy lek" : "Edytuj lek")</h2>
+
+<form method="post">
+	    <div class="form-group">
+        <label for="petId">Zwierzak</label>
+        <select id="petId" name="PetId" class="form-control">
+            @foreach (var pet in pets)
+            {
+                <option value="@pet.Id" selected="@pet.Id == Model.PetId" >@pet.Name</option>
+            }
+        </select>
+    </div>
+	<div class="form-group">
+		<label for="name">Nazwa leku</label>
+		<input type="text" id="name" name="Name" class="form-control" value="@Model.Name" required />
+	</div>
+	<div class="form-group">
+		<label for="dosage">Pojedyncza dawka:</label>
+		<input type="text" id="dosage" name="Dosage" class="form-control" value="@Model.Dosage" required />
+	</div>
+	<div class="form-group">
+		<label for="frequency">Częstotliwość (ile razy dziennie):</label>
+		<input type="text" id="frequency" name="Frequency" class="form-control" value="@Model.Frequency" required />
+	</div>
+	<div class="form-group">
+		<label for="timesOfDay">Godziny podawania leku (oddzielone przecinkami, np. 08:00,14:00,20:00):</label>
+		<input type="text" id="timesOfDay" name="TimesOfDay" class="form-control" value="@Model.TimesOfDay" required />
+	</div>
+
+	<div class="form-group">
+		<label for="startDate">Data rozpoczęcia:</label>
+		<input type="date" id="startDate" name="StartDate" class="form-control" value="@Model.StartDate.ToString("yyyy-MM-dd")" required />
+	</div>
+	<div class="form-group">
+		<label for="endDate">Data zakończenia:</label>
+		<input type="date" id="endDate" name="EndDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")" />
+	</div>
+	<div class="form-group form-check">
+		<input type="checkbox" id="addReminders" name="addReminders" class="form-check-input" value="true" />
+		<input type="hidden" name="addReminders" value="false" />
+		<label class="form-check-label" for="addReminders">Dodaj przypomnienia</label>
+	</div>
+
+	<button type="submit" class="btn btn-primary">Zapisz</button>
+</form>
