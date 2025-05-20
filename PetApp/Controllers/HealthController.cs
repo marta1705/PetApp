@@ -164,6 +164,7 @@ namespace PetApp.Controllers
             if (id == 0)
             {
                 medication = new Medication();
+                medication.StartDate = DateTime.Now;
             } else
             {
                 medication = db.Medications.Find(id);
